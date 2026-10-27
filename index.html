@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0284c7">
+  <meta name="description" content="Juego educativo interactivo de sílabas con L, P y circuito completo. PWA instalable y compatible offline.">
+  <title>Circuito Educativo de Sílabas (L y P)</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Fredoka para estética infantil -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Fredoka', cursive, sans-serif;
+      touch-action: manipulation;
+    }
+    
+    @keyframes pulse-light {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .btn-bounce:active {
+      transform: scale(0.92);
+    }
+
+    .animate-bounce-slow {
+      animation: pulse-light 2s infinite;
+    }
+
+    /* Estilos específicos para la Actividad 2 (Chispa Didáctica) */
+    .app2-body {
+      background: linear-gradient(135deg, #d1fae5 0%, #34d399 50%, #10b981 100%);
+    }
+
+    .bubble {
+      position: fixed;
+      bottom: -60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      border: 3px solid rgba(255,255,255,0.55);
+      animation: rise linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translateY(-115vh) translateX(30px); opacity: 0; }
+    }
+
+    .card-bounce {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .card-bounce:hover {
+      transform: translateY(-6px) scale(1.06) rotate(-1deg);
+      box-shadow: 0 15px 25px -5px rgba(16, 185, 129, 0.35);
+    }
+    .card-bounce:active {
+      transform: translateY(2px) scale(0.93);
+    }
+
+    .cardin {
+      display: block;
+      width: 100%;
+      height: 100%;
+      animation: cardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: scale(0.3) translateY(30px) rotate(-8deg); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    @keyframes pulse-syllable {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.08) rotate(2deg); }
+    }
+    .animate-syllable { animation: pulse-syllable 2s infinite ease-in-out; }
+
+    @keyframes pop-success {
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.2) rotate(-4deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .animate-pop { animation: pop-success 0.45s ease-out; }
+
+    @keyframes shake-error {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .animate-shake { animation: shake-error 0.4s ease-in-out; }
+
+    canvas#confettiCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .fig {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      animation: idle 3s ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+      filter: drop-shadow(0 4px 3px rgba(15, 23, 42, 0.22));
+    }
+    @keyframes idle {
+      0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+      50%      { transform: translateY(-5px) rotate(1.5deg); }
+    }
+
+    .blink, .wiggle, .sway, .pulse, .spin, .bob, .flap, .twinkle {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .wave, .swing, .doorswing, .brush { transform-box: view-box; }
+
+    .blink { animation: blink 4s infinite; animation-delay: var(--d, 0s); }
+    @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
+    .flap { transform-origin: var(--o, 50% 20%); animation: flap 0.7s ease-in-out infinite alternate; }
+    @keyframes flap {
+      from { transform: rotate(calc(var(--r, 1) * -16deg)); }
+      to   { transform: rotate(calc(var(--r, 1) * 8deg)); }
+    }
+
+    .wiggle { transform-origin: 50% 100%; animation: wiggle 0.9s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+    @keyframes wiggle { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+
+    .sway { transform-origin: 50% 100%; animation: sway 2.2s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+    @keyframes sway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+
+    .pulse { animation: pulse 1.1s ease-in-out infinite; animation-delay: var(--d, 0s); }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.22); } }
+
+    .spin { animation: spin 5s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .bob { animation: bob 0.8s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+    @keyframes bob { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+
+    .wave { animation: wave 1.3s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+    @keyframes wave { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+
+    .swing { animation: swing 1.8s ease-in-out infinite alternate; }
+    @keyframes swing { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+
+    .doorswing { animation: doorswing 2.4s ease-in-out infinite; }
+    @keyframes doorswing { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.55); } }
+
+    .brush { animation: brushmove 1.2s ease-in-out infinite alternate; }
+    @keyframes brushmove { from { transform: rotate(-10deg); } to { transform: rotate(8deg); } }
+
+    .river { animation: river 1.6s linear infinite; }
+    @keyframes river { from { transform: translateX(0); } to { transform: translateX(-20px); } }
+
+    .twinkle { animation: twinkle 1.2s ease-in-out infinite; }
+    @keyframes twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.35) rotate(18deg); } }
+
+    .spinball { animation: spin 3.5s linear infinite; }
+    .hop { transform-box: fill-box; transform-origin: 50% 100%; animation: hop 1.2s ease-in-out infinite; }
+    @keyframes hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 40% { transform: translateY(-10px) scale(0.95, 1.06); } 60% { transform: translateY(-10px) scale(0.95, 1.06); } 85% { transform: translateY(0) scale(1.06, 0.92); } }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body id="main-body" class="bg-sky-50 min-h-screen text-slate-800 flex flex-col justify-between selection:bg-sky-200">
+
+  <canvas id="confettiCanvas"></canvas>
+  <div id="bubbles"></div>
+
+  <!-- CONTENEDOR ACTIVIDAD 1: JUEGO DE SÍLABAS L Y P -->
+  <div id="contenedor-actividad-1" class="flex flex-col min-h-screen justify-between w-full">
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-sky-100 shadow-sm px-4 py-3">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold shadow-md shadow-sky-200">
+            LP
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-800 leading-none">Actividad 1: Sílabas con L y P</h1>
+            <span class="text-xs text-sky-600 font-semibold tracking-wider uppercase">Menos de 6 fallas para avanzar</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto w-full px-4 py-6 flex-grow flex flex-col justify-center z-10">
+      <div class="bg-white rounded-3xl p-4 sm:p-6 shadow-xl shadow-sky-100/80 border border-sky-50 mb-6 transition-all">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shadow-inner">
+              <i class="fa-solid fa-star"></i>
+            </div>
+            <div>
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Aciertos</div>
+              <div id="aciertos-1" class="text-2xl sm:text-3xl font-bold text-emerald-600">0</div>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ronda</div>
+            <div class="text-lg font-bold text-sky-600"><span id="intentos-1">0</span> <span class="text-slate-300">/</span> <span id="max-intentos-1">20</span></div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div>
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Fallas</div>
+              <div id="fallas-1" class="text-2xl sm:text-3xl font-bold text-rose-500 text-right">0</div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-500 flex items-center justify-center text-xl shadow-inner">
+              <i class="fa-solid fa-heart-crack"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-sky-50/70 p-3.5 rounded-2xl border border-sky-100">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold animate-bounce-slow shrink-0 shadow-md">
+              <i class="fa-solid fa-volume-high"></i>
+            </div>
+            <p id="instruccion-texto-1" class="text-slate-700 font-semibold text-base sm:text-lg">
+              ¡Presiona 'Escuchar' para iniciar!
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button onclick="repetirVoz1()" class="flex-1 sm:flex-none bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-md shadow-sky-200 active:scale-95 transition-all text-sm flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rotate-right"></i>
+              <span>Escuchar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="letras-1" class="grid grid-cols-4 sm:grid-cols-5 gap-2.5 sm:gap-3.5 justify-center"></div>
+    </main>
+
+    <footer class="bg-white border-t border-sky-100 py-3 text-center text-xs text-slate-400">
+      Circuito Educativo &bull; Actividad 1: Sílabas con L y P
+    </footer>
+  </div>
+
+  <!-- CONTENEDOR ACTIVIDAD 2: SÍLABAS CON P (CHISPA DIDÁCTICA) -->
+  <div id="contenedor-actividad-2" class="hidden flex-col min-h-screen justify-between p-3 sm:p-5 relative w-full">
+    <header class="w-full max-w-4xl mx-auto flex justify-between items-center bg-white/90 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-xl border-4 border-white/80 z-10">
+      <div class="flex items-center space-x-3">
+        <div class="bg-gradient-to-tr from-emerald-500 to-teal-600 text-white rounded-xl p-2.5 shadow-md font-black text-2xl w-10 h-10 flex items-center justify-center">
+          P
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black text-emerald-950 leading-none">Actividad 2: Sílabas con "P"</h1>
+          <p class="text-xs sm:text-sm font-semibold text-emerald-600 mt-1">Presiona la figura correcta</p>
+        </div>
+      </div>
+
+      <button id="speakTargetBtn-2" title="Escuchar sílaba de nuevo" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold p-3 sm:px-4 sm:py-3 rounded-2xl shadow-lg transition transform active:scale-95 flex items-center gap-2 border-2 border-amber-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+        </svg>
+        <span class="hidden sm:inline font-bold">Repetir</span>
+      </button>
+    </header>
+
+    <main class="w-full max-w-4xl mx-auto my-auto flex flex-col items-center justify-center py-2 z-10">
+      <div class="my-2 sm:my-3 text-center w-full">
+        <div class="inline-block bg-white/95 backdrop-blur-md rounded-3xl px-10 sm:px-14 py-2 sm:py-4 shadow-2xl border-4 border-emerald-300 transform transition-all">
+          <span class="text-emerald-500 text-xs sm:text-sm font-extrabold uppercase tracking-widest block mb-1">Busca la sílaba:</span>
+          <div id="silaba-2" class="text-7xl sm:text-9xl font-black text-emerald-600 tracking-wider animate-syllable drop-shadow-lg">
+            PA
+          </div>
+        </div>
+      </div>
+
+      <div id="figuras-2" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-5 w-full px-1 py-2"></div>
+
+      <div id="feedbackText-2" class="h-10 my-1 text-center font-black text-xl sm:text-2xl text-emerald-950 transition-all duration-300 opacity-0">
+        &nbsp;
+      </div>
+    </main>
+
+    <footer class="w-full max-w-4xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-xl border-4 border-white/80 flex flex-col sm:flex-row justify-between items-center gap-3 z-10">
+      <div id="status-2" class="flex items-center justify-around w-full sm:w-auto gap-3 sm:gap-6">
+        <div class="flex items-center gap-2 bg-emerald-100 border-2 border-emerald-300 px-4 py-2 rounded-2xl shadow-sm">
+          <span class="text-2xl">🌟</span>
+          <div>
+            <span class="text-[10px] sm:text-xs text-emerald-800 block font-extrabold leading-none">Aciertos</span>
+            <span id="aciertos-2" class="text-lg sm:text-xl font-black text-emerald-950">0</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 bg-rose-100 border-2 border-rose-300 px-4 py-2 rounded-2xl shadow-sm">
+          <span class="text-2xl">❌</span>
+          <div>
+            <span class="text-[10px] sm:text-xs text-rose-800 block font-extrabold leading-none">Fallas</span>
+            <span id="fallas-2" class="text-lg sm:text-xl font-black text-rose-950">0</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 bg-purple-100 border-2 border-purple-300 px-4 py-2 rounded-2xl shadow-sm">
+          <span class="text-xs sm:text-sm text-purple-900 font-extrabold">Ronda: <span id="rondaNum-2">1</span>/20</span>
+        </div>
+      </div>
+
+      <div class="hidden sm:block text-xs font-bold text-emerald-700/60 uppercase tracking-widest text-center px-4">
+        Chispa Didáctica<br>Actividad 2
+      </div>
+
+      <button id="reiniciar-2" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3 px-8 rounded-2xl shadow-lg active:scale-95 transition transform flex items-center justify-center gap-2 border-2 border-emerald-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <span>Reiniciar Actividad</span>
+      </button>
+    </footer>
+  </div>
+
+  <!-- MODAL DE TRANSICIÓN / FIN DE CIRCUITO -->
+  <div id="modal-circuito" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl transform transition-all scale-100">
+      <div id="modal-icon" class="w-20 h-20 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-inner">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+      <h2 id="modal-title" class="text-2xl font-bold text-slate-800 mb-2">¡Resultado!</h2>
+      <p id="modal-desc" class="text-slate-500 mb-6 text-sm">Descripción del resultado...</p>
+      
+      <div class="bg-slate-50 rounded-2xl p-4 mb-6 flex justify-around">
+        <div>
+          <div class="text-xs text-slate-400 font-semibold uppercase">Fallas Obtenidas</div>
+          <div id="modal-fallas" class="text-2xl font-bold text-rose-500">0</div>
+        </div>
+      </div>
+
+      <button id="modal-btn" onclick="accionModal()" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-sky-200 active:scale-95 transition-all text-base flex items-center justify-center gap-2">
+        <i class="fa-solid fa-play"></i>
+        <span id="modal-btn-text">Continuar</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* ========================================================
+       LÓGICA ACTIVIDAD 1
+       ======================================================== */
+    const silabas1 = ["LA", "LE", "LI", "LO", "LU", "PA", "PE", "PI", "PO", "PU"];
+    let grid1, aciertosEl1, fallasEl1, intentosEl1, instruccionTexto1;
+    let aciertos1 = 0, fallas1 = 0, intentos1 = 0, objetivo1 = "";
+    const maxIntentos1 = 20;
+
+    function speak1(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const silabasMap = {
+        "LA": "lá", "LE": "lé", "LI": "lí", "LO": "ló", "LU": "lú",
+        "PA": "pá", "PE": "pé", "PI": "pí", "PO": "pó", "PU": "pú"
+      };
+      let textoFormateado = text;
+      const upper = text.toUpperCase();
+      if (silabasMap[upper]) textoFormateado = silabasMap[upper];
+
+      const utterance = new SpeechSynthesisUtterance(textoFormateado);
+      utterance.lang = "es-MX"; 
+      utterance.rate = 0.85;    
+      utterance.pitch = 1.1;    
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function generarGrid1() {
+      if (!grid1) return;
+      grid1.innerHTML = "";
+      let posiciones = Array.from({length: 20}, (_, i) => i);
+      let posObjetivo = posiciones[Math.floor(Math.random() * posiciones.length)];
+
+      const colores = [
+        "bg-amber-400 hover:bg-amber-500 text-amber-950 border-amber-500",
+        "bg-sky-400 hover:bg-sky-500 text-sky-950 border-sky-500",
+        "bg-emerald-400 hover:bg-emerald-500 text-emerald-950 border-emerald-500",
+        "bg-rose-400 hover:bg-rose-500 text-rose-950 border-rose-500",
+        "bg-purple-400 hover:bg-purple-500 text-purple-950 border-purple-500"
+      ];
+
+      for (let i = 0; i < 20; i++) {
+        let silaba = (i === posObjetivo) ? objetivo1 : silabas1[Math.floor(Math.random() * silabas1.length)];
+        const colorClass = colores[i % colores.length];
+        const btn = document.createElement("button");
+        btn.className = `${colorClass} border-b-4 active:border-b-0 rounded-2xl text-2xl sm:text-3xl font-extrabold h-14 sm:h-16 flex items-center justify-center shadow-md active:translate-y-1 transition-all btn-bounce uppercase select-none`;
+        btn.textContent = silaba;
+        btn.onclick = () => verificar1(silaba);
+        grid1.appendChild(btn);
+      }
+    }
+
+    function nuevaRonda1() {
+      if (intentos1 >= maxIntentos1) {
+        finalizarActividad1();
+        return;
+      }
+      objetivo1 = silabas1[Math.floor(Math.random() * silabas1.length)];
+      if (instruccionTexto1) instruccionTexto1.textContent = `Presiona la sílaba '${objetivo1}'`;
+      speak1(`Presiona ${objetivo1}`);
+      generarGrid1();
+    }
+
+    function repetirVoz1() {
+      if (intentos1 >= maxIntentos1) return;
+      if (!objetivo1) nuevaRonda1();
+      else speak1(`Presiona ${objetivo1}`);
+    }
+
+    function verificar1(silaba) {
+      if (intentos1 >= maxIntentos1) return;
+      intentos1++;
+      if (intentosEl1) intentosEl1.textContent = intentos1;
+
+      if (silaba === objetivo1) {
+        aciertos1++;
+        if (aciertosEl1) aciertosEl1.textContent = aciertos1;
+        speak1("¡Excelente!");
+      } else {
+        fallas1++;
+        if (fallasEl1) fallasEl1.textContent = fallas1;
+        speak1("Incorrecto");
+      }
+
+      if (intentos1 >= maxIntentos1) {
+        finalizarActividad1();
+      } else {
+        nuevaRonda1();
+      }
+    }
+
+    function reiniciarJuego1() {
+      aciertos1 = 0;
+      fallas1 = 0;
+      intentos1 = 0;
+      objetivo1 = "";
+      if (aciertosEl1) aciertosEl1.textContent = "0";
+      if (fallasEl1) fallasEl1.textContent = "0";
+      if (intentosEl1) intentosEl1.textContent = "0";
+      nuevaRonda1();
+    }
+
+    function finalizarActividad1() {
+      const modal = document.getElementById("modal-circuito");
+      const modalTitle = document.getElementById("modal-title");
+      const modalDesc = document.getElementById("modal-desc");
+      const modalFallas = document.getElementById("modal-fallas");
+      const modalBtnText = document.getElementById("modal-btn-text");
+
+      modalFallas.textContent = fallas1;
+
+      if (fallas1 < 6) {
+        speak1("¡Muy bien! Menos de seis fallas. Pasas a la siguiente actividad.");
+        modalTitle.textContent = "¡Actividad 1 Superada!";
+        modalDesc.textContent = "Obtuviste menos de 6 fallas. ¡Estás listo para la siguiente actividad!";
+        modalBtnText.textContent = "Iniciar Actividad 2";
+        window.estadoSiguiente = "iniciar_actividad_2";
+      } else {
+        speak1("Tienes más de 5 fallas. Debes repetir la actividad.");
+        modalTitle.textContent = "¡A repetir la actividad!";
+        modalDesc.textContent = "Tuviste 6 o más fallas. Debes repetir esta actividad para mejorar.";
+        modalBtnText.textContent = "Repetir Actividad";
+        window.estadoSiguiente = "repetir_actividad_1";
+      }
+      modal.classList.remove("hidden");
+    }
+
+
+    /* ========================================================
+       LÓGICA ACTIVIDAD 2 (CHISPA DIDÁCTICA P)
+       ======================================================== */
+    const figuras2 = [
+      { palabra: "pato", silaba: "pa", fig: "pato" },
+      { palabra: "payaso", silaba: "pa", fig: "payaso" },
+      { palabra: "papaya", silaba: "pa", fig: "papaya" },
+      { palabra: "pelota", silaba: "pe", fig: "pelota" },
+      { palabra: "perro", silaba: "pe", fig: "perro" },
+      { palabra: "pera", silaba: "pe", fig: "pera" },
+      { palabra: "piña", silaba: "pi", fig: "pina" },
+      { palabra: "pie", silaba: "pi", fig: "pie" },
+      { palabra: "pintura", silaba: "pi", fig: "pintura" },
+      { palabra: "pollo", silaba: "po", fig: "pollo" },
+      { palabra: "pozo", silaba: "po", fig: "pozo" },
+      { palabra: "policía", silaba: "po", fig: "policia" },
+      { palabra: "pulpo", silaba: "pu", fig: "pulpo" },
+      { palabra: "puerta", silaba: "pu", fig: "puerta" },
+      { palabra: "puente", silaba: "pu", fig: "puente" }
+    ];
+
+    const pastels = ["#FFE4E6", "#E0F2FE", "#FEF9C3", "#EDE9FE", "#DCFCE7", "#FFEDD5", "#FAE8FF"];
+    let grid2, silabaEl2, aciertosEl2, fallasEl2, rondaNumEl2, feedbackText2;
+    let aciertos2 = 0, fallas2 = 0, intentos2 = 0, objetivo2 = "", isProcessing2 = false;
+    const maxIntentos2 = 20;
+
+    const S = 'stroke="#1E293B" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
+    const eye2 = (x, y, r = 5, d = 0) => `<g class="blink" style="--d:${d}s"><circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#1E293B" stroke-width="2"/><circle cx="${x + 1}" cy="${y + 1}" r="${r * 0.55}" fill="#1E293B"/><circle cx="${x + 2.2}" cy="${y - 0.4}" r="${r * 0.22}" fill="#fff"/></g>`;
+    const cheek2 = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="4.2" ry="2.8" fill="#FB7185" opacity=".65"/>`;
+    const smile2 = (x1, y, x2, dip = 8) => `<path d="M${x1} ${y} Q${(x1 + x2) / 2} ${y + dip} ${x2} ${y}" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>`;
+    const tent2 = (d, delay, ox, oy) => `<g class="wave" style="--d:${delay}s;transform-origin:${ox}px ${oy}px"><path d="${d}" fill="none" stroke="#1E293B" stroke-width="13" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#A855F7" stroke-width="8.5" stroke-linecap="round"/></g>`;
+
+    const figsMap = {
+      pato: `<path d="M14 58 L4 46 L22 52 Z" fill="#FDE047" ${S}/><ellipse cx="42" cy="64" rx="30" ry="22" fill="#FDE047" ${S}/><g class="flap" style="--o:20% 30%;--r:1"><path d="M30 60 Q46 50 58 64 Q46 80 30 70 Z" fill="#FACC15" ${S}/></g><circle cx="66" cy="36" r="18" fill="#FDE047" ${S}/><path d="M60 19 Q58 10 64 14 Q66 6 70 15" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/><path d="M80 35 Q97 33 95 42 Q91 49 78 44 Z" fill="#FB923C" ${S}/>${eye2(70, 30, 5)}${cheek2(64, 43)}<path d="M36 86 l-7 8 h14 z" fill="#FB923C" ${S}/><path d="M52 86 l-7 8 h14 z" fill="#FB923C" ${S}/>`,
+      payaso: `<circle cx="23" cy="54" r="12" fill="#EF4444" ${S}/><circle cx="77" cy="54" r="12" fill="#3B82F6" ${S}/><path d="M50 86 L34 78 L34 97 Z M50 86 L66 78 L66 97 Z" fill="#F59E0B" ${S}/><circle cx="50" cy="86" r="4" fill="#EF4444" ${S}/><circle cx="50" cy="58" r="26" fill="#FEF3C7" ${S}/><path d="M34 36 L50 6 L66 36 Z" fill="#8B5CF6" ${S}/><circle cx="50" cy="20" r="2.5" fill="#FDE047"/><circle cx="44" cy="30" r="2.5" fill="#FDE047"/><circle cx="57" cy="30" r="2.5" fill="#FDE047"/><circle class="bob" cx="50" cy="6" r="5.5" fill="#FDE047" ${S}/>${eye2(40, 54, 5.5, 0.3)}${eye2(60, 54, 5.5, 0.3)}<circle class="pulse" cx="50" cy="64" r="6.5" fill="#EF4444" ${S}/><path d="M36 72 Q50 90 64 72 Q50 77 36 72 Z" fill="#fff" ${S}/>${cheek2(31, 66)}${cheek2(69, 66)}`,
+      papaya: `<g class="sway" style="--d:.2s"><path d="M50 14 Q48 6 56 3" fill="none" stroke="#1E293B" stroke-width="7" stroke-linecap="round"/><path d="M50 14 Q48 6 56 3" fill="none" stroke="#65A30D" stroke-width="3.5" stroke-linecap="round"/></g><ellipse cx="50" cy="55" rx="28" ry="40" fill="#A3E635" ${S}/><ellipse cx="50" cy="56" rx="22" ry="34" fill="#FB923C" ${S} stroke-width="2"/><ellipse cx="50" cy="66" rx="12" ry="16" fill="#FDBA74"/><circle class="bob" style="--d:0s" cx="43" cy="64" r="3.4" fill="#1E293B"/><circle class="bob" style="--d:.2s" cx="52" cy="62" r="3.4" fill="#1E293B"/><circle class="bob" style="--d:.4s" cx="58" cy="68" r="3.4" fill="#1E293B"/><circle class="bob" style="--d:.6s" cx="47" cy="74" r="3.4" fill="#1E293B"/><circle class="bob" style="--d:.8s" cx="55" cy="77" r="3.4" fill="#1E293B"/>${eye2(41, 40, 5.5)}${eye2(59, 40, 5.5)}${smile2(43, 50, 57, 6)}${cheek2(34, 49)}${cheek2(66, 49)}`,
+      pelota: `<ellipse cx="50" cy="94" rx="26" ry="4" fill="#0F172A" opacity=".18"/><g class="hop"><g class="spinball"><path d="M50 50 L50 12 A38 38 0 0 1 82.9 31 Z" fill="#EF4444"/><path d="M50 50 L82.9 31 A38 38 0 0 1 82.9 69 Z" fill="#FDE047"/><path d="M50 50 L82.9 69 A38 38 0 0 1 50 88 Z" fill="#3B82F6"/><path d="M50 50 L50 88 A38 38 0 0 1 17.1 69 Z" fill="#22C55E"/><path d="M50 50 L17.1 69 A38 38 0 0 1 17.1 31 Z" fill="#FB923C"/><path d="M50 50 L17.1 31 A38 38 0 0 1 50 12 Z" fill="#A855F7"/><circle cx="50" cy="50" r="7" fill="#fff" ${S} stroke-width="2"/></g><circle cx="50" cy="50" r="38" fill="none" ${S}/><path d="M26 30 Q34 20 46 18" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".7"/></g>`,
+      perro: `<g class="wave" style="--d:0s;transform-origin:30px 40px"><ellipse cx="20" cy="56" rx="11" ry="24" fill="#92400E" ${S}/></g><g class="wave" style="--d:.4s;transform-origin:70px 40px"><ellipse cx="80" cy="56" rx="11" ry="24" fill="#92400E" ${S}/></g><circle cx="50" cy="50" r="29" fill="#F59E0B" ${S}/><ellipse cx="36" cy="42" rx="11" ry="9" fill="#92400E" opacity=".85"/><ellipse cx="50" cy="64" rx="17" ry="13" fill="#FEF3C7" ${S} stroke-width="2"/>${eye2(38, 44, 5.5)}${eye2(62, 44, 5.5)}<ellipse cx="50" cy="58" rx="7" ry="5" fill="#1E293B"/><ellipse cx="48" cy="56.5" rx="2" ry="1.2" fill="#fff" opacity=".8"/><path d="M50 63 V68 M50 68 Q44 74 40 68 M50 68 Q56 74 60 68" fill="none" stroke="#1E293B" stroke-width="2.3" stroke-linecap="round"/><path class="pulse" style="transform-origin:50% 0" d="M45 71 Q50 90 55 71 Z" fill="#FB7185" ${S} stroke-width="2"/>${cheek2(30, 58)}${cheek2(70, 58)}`,
+      pera: `<path d="M50 14 C40 14 40 30 34 40 C22 54 18 66 26 78 C36 92 64 92 74 78 C82 66 78 54 66 40 C60 30 60 14 50 14 Z" fill="#A3E635" ${S}/><path d="M32 52 Q26 62 30 72" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/><g class="sway" style="--d:.1s"><path d="M50 16 Q50 8 57 3" fill="none" stroke="#1E293B" stroke-width="7" stroke-linecap="round"/><path d="M50 16 Q50 8 57 3" fill="none" stroke="#92400E" stroke-width="3.5" stroke-linecap="round"/><path d="M54 10 Q68 0 74 12 Q62 18 54 10Z" fill="#22C55E" ${S} stroke-width="2"/></g>${eye2(40, 62, 5.5)}${eye2(60, 62, 5.5)}${smile2(42, 73, 58, 8)}${cheek2(32, 72)}${cheek2(68, 72)}`,
+      pina: `<defs><clipPath id="clipPina2"><ellipse cx="50" cy="66" rx="25" ry="29"/></clipPath></defs><g class="sway" style="--d:0s"><path d="M44 42 L22 16 L42 30 Z" fill="#22C55E" ${S}/></g><g class="sway" style="--d:.3s"><path d="M56 42 L78 16 L58 30 Z" fill="#22C55E" ${S}/></g><g class="sway" style="--d:.15s"><path d="M50 42 L38 6 L48 24 L50 0 L52 24 L62 6 Z" fill="#16A34A" ${S}/></g><ellipse cx="50" cy="66" rx="25" ry="29" fill="#FBBF24" ${S}/><g clip-path="url(#clipPina2)" stroke="#B45309" stroke-width="1.8" fill="none" opacity=".7"><path d="M20 44 L80 96 M20 58 L70 100 M30 38 L84 84 M20 76 L56 100"/><path d="M80 44 L20 96 M80 58 L30 100 M70 38 L16 84 M80 76 L44 100"/></g><ellipse cx="50" cy="66" rx="25" ry="29" fill="none" ${S}/>${eye2(41, 60, 5.5)}${eye2(59, 60, 5.5)}${smile2(43, 71, 57, 7)}${cheek2(33, 70)}${cheek2(67, 70)}`,
+      pie: `<circle class="wiggle" style="--d:0s" cx="34" cy="22" r="11" fill="#FDBA74" ${S}/><circle class="wiggle" style="--d:.15s" cx="54" cy="24" r="7.5" fill="#FDBA74" ${S}/><circle class="wiggle" style="--d:.3s" cx="66" cy="32" r="6.5" fill="#FDBA74" ${S}/><circle class="wiggle" style="--d:.45s" cx="75" cy="42" r="6" fill="#FDBA74" ${S}/><circle class="wiggle" style="--d:.6s" cx="80" cy="53" r="5.5" fill="#FDBA74" ${S}/><path d="M26 34 C22 56 26 74 34 86 C42 98 64 98 72 86 C84 70 84 58 76 50 C66 36 44 28 26 34 Z" fill="#FDBA74" ${S}/><path d="M32 44 Q30 60 34 74" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/>${eye2(44, 66, 5)}${eye2(62, 66, 5)}${smile2(46, 79, 60, 6)}${cheek2(37, 76)}${cheek2(68, 76)}`,
+      pintura: `<path d="M50 18 C20 18 8 42 14 62 C20 84 44 88 54 80 C62 74 52 66 60 60 C70 52 92 58 92 44 C90 28 72 18 50 18 Z" fill="#FDE68A" ${S}/><ellipse cx="36" cy="68" rx="7" ry="5.5" fill="#D1FAE5" ${S} stroke-width="2"/><circle class="pulse" style="--d:0s" cx="28" cy="44" r="7.5" fill="#EF4444" ${S} stroke-width="2"/><circle class="pulse" style="--d:.25s" cx="44" cy="32" r="7.5" fill="#3B82F6" ${S} stroke-width="2"/><circle class="pulse" style="--d:.5s" cx="62" cy="34" r="7.5" fill="#22C55E" ${S} stroke-width="2"/><circle class="pulse" style="--d:.75s" cx="78" cy="44" r="6.5" fill="#A855F7" ${S} stroke-width="2"/><circle class="pulse" style="--d:1s" cx="22" cy="62" r="6" fill="#FB923C" ${S} stroke-width="2"/><g class="brush" style="transform-origin:76px 90px"><line x1="76" y1="92" x2="88" y2="56" stroke="#1E293B" stroke-width="11" stroke-linecap="round"/><line x1="76" y1="92" x2="88" y2="56" stroke="#B45309" stroke-width="7" stroke-linecap="round"/><line x1="88" y1="56" x2="91" y2="47" stroke="#1E293B" stroke-width="11" stroke-linecap="round"/><line x1="88" y1="56" x2="91" y2="47" stroke="#CBD5E1" stroke-width="7" stroke-linecap="round"/><line x1="91" y1="47" x2="93" y2="40" stroke="#1E293B" stroke-width="11" stroke-linecap="round"/><line x1="91" y1="47" x2="93" y2="40" stroke="#EF4444" stroke-width="7" stroke-linecap="round"/></g>`,
+      pollo: `<circle cx="42" cy="26" r="6.5" fill="#EF4444" ${S} stroke-width="2"/><circle cx="50" cy="22" r="7.5" fill="#EF4444" ${S} stroke-width="2"/><circle cx="58" cy="26" r="6.5" fill="#EF4444" ${S} stroke-width="2"/><path d="M40 86 V94 M60 86 V94 M34 94 H46 M54 94 H66" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/><path d="M40 86 V94 M60 86 V94 M34 94 H46 M54 94 H66" stroke="#FB923C" stroke-width="3" stroke-linecap="round"/><ellipse cx="50" cy="58" rx="33" ry="30" fill="#FDE047" ${S}/><g class="flap" style="--o:90% 20%;--r:1"><ellipse cx="22" cy="62" rx="9" ry="15" fill="#FACC15" ${S}/></g><g class="flap" style="--o:10% 20%;--r:-1"><ellipse cx="78" cy="62" rx="9" ry="15" fill="#FACC15" ${S}/></g>${eye2(39, 50, 5.5)}${eye2(61, 50, 5.5)}<path d="M43 58 L57 58 L50 69 Z" fill="#FB923C" ${S}/><ellipse cx="50" cy="74" rx="3.5" ry="5" fill="#EF4444" ${S} stroke-width="2"/>${cheek2(30, 62)}${cheek2(70, 62)}`,
+      pozo: `<rect x="26" y="22" width="7" height="36" fill="#92400E" ${S} stroke-width="2"/><rect x="67" y="22" width="7" height="36" fill="#92400E" ${S} stroke-width="2"/><path d="M24 56 L24 84 C24 94 76 94 76 84 L76 56 Z" fill="#CBD5E1" ${S}/><path d="M24 68 Q50 76 76 68 M24 78 Q50 86 76 78 M38 63 V72 M62 63 V72 M50 72 V82 M32 72 V80 M68 72 V80" fill="none" stroke="#64748B" stroke-width="1.8"/><ellipse cx="50" cy="56" rx="26" ry="9" fill="#64748B" ${S}/><ellipse class="pulse" cx="50" cy="57" rx="19" ry="5.5" fill="#38BDF8"/><line x1="50" y1="26" x2="50" y2="46" stroke="#1E293B" stroke-width="2"/><g class="swing" style="transform-origin:50px 26px"><line x1="50" y1="26" x2="50" y2="44" stroke="#1E293B" stroke-width="2"/><path d="M43 44 H57 L55 54 H45 Z" fill="#B45309" ${S} stroke-width="2"/></g><path d="M16 28 L50 5 L84 28 Z" fill="#DC2626" ${S}/><circle cx="50" cy="18" r="3.5" fill="#FDE047"/>`,
+      policia: `<path d="M24 84 Q50 98 76 84 L86 100 H14 Z" fill="#1E3A8A" ${S}/><path d="M50 88 L44 100 H56 Z" fill="#EF4444" ${S} stroke-width="2"/><circle cx="50" cy="60" r="26" fill="#FCD9B6" ${S}/><path d="M22 46 Q22 14 50 14 Q78 14 78 46 Z" fill="#1E3A8A" ${S}/><path d="M18 46 H82 Q82 56 74 56 H26 Q18 56 18 46 Z" fill="#172554" ${S}/><polygon class="twinkle" points="50,22 52.6,28.4 59.5,28.8 54.2,33.2 56,40 50,36.2 44,40 45.8,33.2 40.5,28.8 47.4,28.4" fill="#FDE047" ${S} stroke-width="1.8"/>${eye2(40, 66, 5)}${eye2(60, 66, 5)}${smile2(42, 76, 58, 7)}${cheek2(32, 74)}${cheek2(68, 74)}`,
+      pulpo: `${tent2("M32 56 Q14 70 24 90", 0, 32, 56)}${tent2("M42 62 Q34 80 42 95", 0.25, 42, 62)}${tent2("M58 62 Q66 80 58 95", 0.5, 58, 62)}${tent2("M68 56 Q86 70 76 90", 0.75, 68, 56)}<circle cx="50" cy="40" r="28" fill="#A855F7" ${S}/><circle cx="38" cy="20" r="3.5" fill="#D8B4FE"/><circle cx="50" cy="16" r="3" fill="#D8B4FE"/><circle cx="62" cy="21" r="3.5" fill="#D8B4FE"/>${eye2(40, 40, 7.5)}${eye2(60, 40, 7.5)}${smile2(42, 55, 58, 8)}${cheek2(30, 52)}${cheek2(70, 52)}`,
+      puerta: `<rect x="22" y="8" width="56" height="84" rx="3" fill="#78350F" ${S}/><rect x="29" y="15" width="42" height="77" fill="#FEF08A"/><circle cx="50" cy="55" r="12" fill="#FDE047" opacity=".7"/><g class="doorswing" style="transform-origin:29px 54px"><rect x="29" y="15" width="42" height="77" fill="#B45309" ${S}/><rect x="34" y="21" width="14" height="28" rx="2" fill="#D97706" stroke="#1E293B" stroke-width="1.8"/><rect x="52" y="21" width="14" height="28" rx="2" fill="#D97706" stroke="#1E293B" stroke-width="1.8"/><rect x="34" y="55" width="14" height="30" rx="2" fill="#D97706" stroke="#1E293B" stroke-width="1.8"/><rect x="52" y="55" width="14" height="30" rx="2" fill="#D97706" stroke="#1E293B" stroke-width="1.8"/><circle cx="62" cy="54" r="3.8" fill="#FDE047" ${S} stroke-width="2"/></g><ellipse cx="50" cy="95" rx="24" ry="4.5" fill="#EF4444" ${S} stroke-width="2"/>`,
+      puente: `<g class="spin" style="transform-origin:82px 18px"><g stroke="#F59E0B" stroke-width="3" stroke-linecap="round"><path d="M82 4 V8 M82 28 V32 M68 18 H72 M92 18 H96 M72 8 l3 3 M89 25 l3 3 M92 8 l-3 3 M75 25 l-3 3"/></g></g><circle class="pulse" cx="82" cy="18" r="8" fill="#FDE047" ${S}/><path d="M6 44 H94 V82 H78 A28 28 0 0 0 22 82 H6 Z" fill="#CBD5E1" ${S}/><path d="M6 56 H22 M78 56 H94 M6 68 H20 M80 68 H94 M14 44 V56 M30 44 V52 M46 44 V50 M54 44 V50 M70 44 V52 M86 44 V56 M14 56 V68 M88 56 V68" stroke="#64748B" stroke-width="1.8" fill="none"/><path d="M6 34 H94" stroke="#1E293B" stroke-width="3" stroke-linecap="round"/><path d="M14 34 V44 M30 34 V44 M46 34 V44 M54 34 V44 M70 34 V44 M86 34 V44" stroke="#1E293B" stroke-width="3" stroke-linecap="round"/><rect x="0" y="80" width="100" height="22" fill="#38BDF8"/><g class="river"><path d="M-20 86 q5 -6 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 V102 H-20 Z" fill="#0EA5E9"/><path d="M-20 94 q5 -6 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0" fill="none" stroke="#fff" stroke-width="2" opacity=".6"/></g>`
+    };
+
+    const figSvg2 = (name, delay) => `<svg class="fig" style="--d:${delay}s" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${figsMap[name]}</svg>`;
+
+    function speak2(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        let spokenText = text;
+        const normalized = text.toLowerCase().trim();
+        const phoneticMap = { 'pa': 'pá', 'pe': 'pé', 'pi': 'pí', 'po': 'pó', 'pu': 'pú' };
+        if (phoneticMap[normalized]) spokenText = phoneticMap[normalized];
+
+        const utterance = new SpeechSynthesisUtterance(spokenText);
+        utterance.lang = "es-MX";
+        utterance.rate = 0.85;
+        utterance.pitch = 1.15;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function showFeedback2(msg, isSuccess) {
+      feedbackText2.textContent = msg;
+      feedbackText2.className = `h-10 my-1 text-center font-black text-xl sm:text-2xl transition-all duration-300 ${isSuccess ? 'text-emerald-600 scale-105' : 'text-rose-600'}`;
+      feedbackText2.style.opacity = '1';
+      setTimeout(() => { feedbackText2.style.opacity = '0'; }, 1300);
+    }
+
+    function mostrarFiguras2() {
+      const grid = document.getElementById("figuras-2");
+      grid.innerHTML = "";
+
+      const correctas = figuras2.filter(f => f.silaba === objetivo2);
+      const incorrectas = figuras2.filter(f => f.silaba !== objetivo2);
+      const figuraCorrecta = correctas[Math.floor(Math.random() * correctas.length)];
+      const seleccionIncorrectas = [...incorrectas].sort(() => 0.5 - Math.random()).slice(0, 4);
+      const seleccion = [figuraCorrecta, ...seleccionIncorrectas].sort(() => 0.5 - Math.random());
+      const colores = [...pastels].sort(() => 0.5 - Math.random());
+
+      seleccion.forEach((f, i) => {
+        const itemBtn = document.createElement("button");
+        itemBtn.type = "button";
+        itemBtn.className = "item card-bounce rounded-3xl p-3 sm:p-4 shadow-xl border-4 border-white/90 flex flex-col items-center justify-center aspect-square focus:outline-none focus:ring-4 focus:ring-emerald-300 cursor-pointer";
+        itemBtn.style.backgroundColor = colores[i];
+
+        const wrap = document.createElement("span");
+        wrap.className = "cardin pointer-events-none";
+        wrap.style.animationDelay = (i * 0.09) + "s";
+        wrap.innerHTML = figSvg2(f.fig, (Math.random() * 1.5).toFixed(2));
+
+        itemBtn.appendChild(wrap);
+        itemBtn.onclick = () => verificar2(f, itemBtn);
+        grid.appendChild(itemBtn);
+      });
+    }
+
+    function nuevaRonda2() {
+      isProcessing2 = false;
+      if (intentos2 >= maxIntentos2) {
+        finalizarActividad2();
+        return;
+      }
+
+      const silabas = ["pa", "pe", "pi", "po", "pu"];
+      objetivo2 = silabas[Math.floor(Math.random() * silabas.length)];
+      silabaEl2.textContent = objetivo2.toUpperCase();
+      rondaNumEl2.textContent = intentos2 + 1;
+
+      mostrarFiguras2();
+      setTimeout(() => { speak2(objetivo2); }, 250);
+    }
+
+    function verificar2(figura, cardElement) {
+      if (isProcessing2 || intentos2 >= maxIntentos2) return;
+      isProcessing2 = true;
+      intentos2++;
+
+      speak2(figura.palabra);
+
+      setTimeout(() => {
+        if (figura.silaba === objetivo2) {
+          aciertos2++;
+          aciertosEl2.textContent = aciertos2;
+          cardElement.style.backgroundColor = "#D1FAE5";
+          cardElement.classList.add('border-emerald-400', 'animate-pop');
+          speak2("¡Correcto!");
+          showFeedback2("¡Correcto! 🌟", true);
+        } else {
+          fallas2++;
+          fallasEl2.textContent = fallas2;
+          cardElement.style.backgroundColor = "#FFE4E6";
+          cardElement.classList.add('border-rose-400', 'animate-shake');
+          speak2("no, no");
+          showFeedback2("No, no ❌", false);
+        }
+        setTimeout(() => { nuevaRonda2(); }, 1300);
+      }, 700);
+    }
+
+    function finalizarActividad2() {
+      const modal = document.getElementById("modal-circuito");
+      const modalTitle = document.getElementById("modal-title");
+      const modalDesc = document.getElementById("modal-desc");
+      const modalFallas = document.getElementById("modal-fallas");
+      const modalBtnText = document.getElementById("modal-btn-text");
+
+      modalFallas.textContent = fallas2;
+
+      if (fallas2 < 6) {
+        speak2("¡Excelente! Has completado todo el circuito correctamente.");
+        modalTitle.textContent = "¡Juego Completado! 🎉";
+        modalDesc.textContent = "¡Felicidades! Superaste ambas actividades con éxito. ¿Deseas volver a jugar?";
+        modalBtnText.textContent = "Jugar de Nuevo";
+        window.estadoSiguiente = "reiniciar_todo";
+      } else {
+        speak2("Tienes más de 5 fallas. Debes repetir la actividad dos.");
+        modalTitle.textContent = "¡A repetir la Actividad 2!";
+        modalDesc.textContent = "Tuviste 6 o más fallas en esta última etapa. Debes repetirla.";
+        modalBtnText.textContent = "Repetir Actividad 2";
+        window.estadoSiguiente = "repetir_actividad_2";
+      }
+      modal.classList.remove("hidden");
+    }
+
+
+    /* ========================================================
+       CONTROLADOR DEL MODAL Y TRANSICIONES DE ACTIVIDADES
+       ======================================================== */
+    function accionModal() {
+      const modal = document.getElementById("modal-circuito");
+      modal.classList.add("hidden");
+
+      if (window.estadoSiguiente === "iniciar_actividad_2") {
+        // Ocultar Actividad 1, Mostrar Actividad 2 y configurar fondo
+        document.getElementById("contenedor-actividad-1").classList.add("hidden");
+        document.getElementById("contenedor-actividad-2").classList.remove("hidden");
+        document.getElementById("main-body").className = "app2-body min-h-screen text-slate-800 flex flex-col justify-between selection:bg-emerald-200";
+        
+        // Iniciar Actividad 2
+        aciertos2 = 0; fallas2 = 0; intentos2 = 0;
+        aciertosEl2.textContent = "0"; fallasEl2.textContent = "0"; rondaNumEl2.textContent = "1";
+        nuevaRonda2();
+
+      } else if (window.estadoSiguiente === "repetir_actividad_1") {
+        reiniciarJuego1();
+
+      } else if (window.estadoSiguiente === "repetir_actividad_2") {
+        aciertos2 = 0; fallas2 = 0; intentos2 = 0;
+        aciertosEl2.textContent = "0"; fallasEl2.textContent = "0"; rondaNumEl2.textContent = "1";
+        nuevaRonda2();
+
+      } else if (window.estadoSiguiente === "reiniciar_todo") {
+        // Volver a la Actividad 1
+        document.getElementById("contenedor-actividad-2").classList.add("hidden");
+        document.getElementById("contenedor-actividad-1").classList.remove("hidden");
+        document.getElementById("main-body").className = "bg-sky-50 min-h-screen text-slate-800 flex flex-col justify-between selection:bg-sky-200";
+        reiniciarJuego1();
+      }
+    }
+
+
+    /* ========================================================
+       INICIALIZACIÓN GENERAL
+       ======================================================== */
+    window.addEventListener("DOMContentLoaded", () => {
+      // Refs Actividad 1
+      grid1 = document.getElementById("letras-1");
+      aciertosEl1 = document.getElementById("aciertos-1");
+      fallasEl1 = document.getElementById("fallas-1");
+      intentosEl1 = document.getElementById("intentos-1");
+      instruccionTexto1 = document.getElementById("instruccion-texto-1");
+
+      // Refs Actividad 2
+      silabaEl2 = document.getElementById("silaba-2");
+      aciertosEl2 = document.getElementById("aciertos-2");
+      fallasEl2 = document.getElementById("fallas-2");
+      rondaNumEl2 = document.getElementById("rondaNum-2");
+      feedbackText2 = document.getElementById("feedbackText-2");
+
+      document.getElementById("reiniciar-2").onclick = () => {
+        aciertos2 = 0; fallas2 = 0; intentos2 = 0;
+        aciertosEl2.textContent = "0"; fallasEl2.textContent = "0"; rondaNumEl2.textContent = "1";
+        nuevaRonda2();
+      };
+
+      document.getElementById("speakTargetBtn-2").onclick = () => { speak2(objetivo2); };
+
+      // Iniciar Actividad 1 por defecto
+      reiniciarJuego1();
+    });
+  </script>
+</body>
+</html>
